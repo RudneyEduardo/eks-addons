@@ -5,7 +5,7 @@ locals{
   stage_name = "STAGE"
   cluster_version = "1.28"
   instance_types = ["t4g.medium"]
-  enable_2048_app = false # colocar como true para já subir o cluster com o 2048 
+  account_id = 123456789012
   tags = {
     stage = local.stage
   }
@@ -48,6 +48,24 @@ module "eks" {
 
   vpc_id     = data.aws_vpc.selected.id
   subnet_ids = data.aws_subnets.private.ids
+
+  aws_auth_roles = [
+    {
+      rolearn  = "arn:aws:iam::${local.account_id}:role/CrossAccountAccess-SolvimmSquadAdminRole"
+      username = "solvimm-squad-admin"
+      groups   = ["system:masters"]
+    },
+    {
+      rolearn  = "arn:aws:iam::${local.account_id}:role/AWSReservedSSO_SquadAppModernizationAdmin_a11b1c3e8ba3dc7c"
+      username = "sso-administrator"
+      groups   = ["system:masters"]
+    },
+    {
+      rolearn  = "arn:aws:iam::${local.account_id}:role/eks-access"
+      username = "sso-administrator"
+      groups   = ["system:masters"]
+    }
+  ]
 
   eks_managed_node_groups = {
     core_node_group = {
@@ -94,9 +112,3 @@ module "eks_blueprints_addons" {
     local.tags
   }
 }
-
-module {
-   source = "./modules/app-2048"
-
-   count = local.enable_2048_app ? 1 : 0
-} 

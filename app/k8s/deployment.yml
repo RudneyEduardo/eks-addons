@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: python-app
+  namespace: keda
+spec:
+  selector:
+    matchLabels:
+      app: python-app
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: python-app
+    spec:
+      serviceAccount: keda-operator
+      containers:
+        - name: python-app
+          image: ecr_url
+          command: ["uvicorn"]
+          args :  ["app.main:app", "--host", "0.0.0.0", "--port", "80"]
+          resources:
+            limits:
+              cpu: "1"
+              memory: "2Gi"
+            requests:
+              cpu: "1"
+              memory: "2Gi"
+          ports:
+            - containerPort: 80
+          

@@ -1,0 +1,30 @@
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: keda-trigger-auth-aws-credentials
+  namespace: keda
+spec:
+  podIdentity:
+    provider: aws-eks # or aws-eks when using IRSA
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: aws-sqs-queue-scaledobject
+  namespace: keda
+spec:
+  minReplicaCount: 0  # We don't want pods if the queue is empty
+  maxReplicaCount: 5  # We don't want to have more than 5 replicas
+  pollingInterval: 10 # How frequently we should go for metrics (in seconds)
+  cooldownPeriod:  25 # How many seconds should we wait for downscale 
+  scaleTargetRef:
+    name: python-app
+  triggers:
+  - type: aws-sqs-queue
+    authenticationRef:
+      name: keda-trigger-auth-aws-credentials
+    metadata:
+      queueURL: url_fila
+      queueLength: "1"
+      awsRegion: "us-east-1"
+      identityOwner: operator
